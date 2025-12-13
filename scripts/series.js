@@ -37,28 +37,36 @@ function carregarTemporadas() {
 
 // Função para carregar episódios de uma temporada
 function carregarEpisodios() {
-    getDados(`/series/${serieId}/temporadas/${listaTemporadas.value}`)
+    getDados(`/series/${serieId}/temporadas/todas`)
         .then(data => {
-            const temporadasUnicas = [...new Set(data.map(temporada => temporada.temporada))];
-            fichaSerie.innerHTML = ''; 
+            fichaSerie.innerHTML = '';
+
+            let episodiosFiltrados = data;
+
+            if (listaTemporadas.value !== 'todas' && listaTemporadas.value !== '') {
+                episodiosFiltrados = data.filter(
+                    e => e.temporada == listaTemporadas.value
+                );
+            }
+
+            const temporadasUnicas = [...new Set(episodiosFiltrados.map(e => e.temporada))];
+
             temporadasUnicas.forEach(temporada => {
+                const paragrafo = document.createElement('p');
+                paragrafo.textContent = `Temporada ${temporada}`;
+                fichaSerie.appendChild(paragrafo);
+
                 const ul = document.createElement('ul');
                 ul.className = 'episodios-lista';
 
-                const episodiosTemporadaAtual = data.filter(serie => serie.temporada === temporada);
+                const listaHTML = episodiosFiltrados
+                    .filter(e => e.temporada === temporada)
+                    .map(e => `
+                        <li>${e.numeroEpisodio} - ${e.titulo}</li>
+                    `)
+                    .join('');
 
-                const listaHTML = episodiosTemporadaAtual.map(serie => `
-                    <li>
-                        ${serie.numeroEpisodio} - ${serie.titulo}
-                    </li>
-                `).join('');
                 ul.innerHTML = listaHTML;
-                
-                const paragrafo = document.createElement('p');
-                const linha = document.createElement('br');
-                paragrafo.textContent = `Temporada ${temporada}`;
-                fichaSerie.appendChild(paragrafo);
-                fichaSerie.appendChild(linha);
                 fichaSerie.appendChild(ul);
             });
         })
@@ -66,6 +74,7 @@ function carregarEpisodios() {
             console.error('Erro ao obter episódios:', error);
         });
 }
+
 
 // Função para carregar informações da série
 function carregarInfoSerie() {
